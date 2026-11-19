@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Выбор территории</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    :root { --green:#3bb670; --green-dark:#237a49; --text:#24323d; --line:#d8e1e6; }
+    * { box-sizing:border-box; font-family:Inter, Arial, Helvetica, sans-serif; }
+    body { margin:0; padding:0 20px 32px; background:#fff; color:var(--text); font:18px/1.55 Inter, Arial, Helvetica, sans-serif; }
+    main { max-width:1050px; margin:0 auto; padding:24px; background:#fff; border:1px solid var(--line); border-radius:8px; box-shadow:0 1px 2px #234a6010; }
+    .territory-accordion { display:grid; gap:12px; }
+    .territory-accordion-item { overflow:hidden; border:1px solid var(--line); border-radius:9px; background:#fff; }
+    .territory-accordion-trigger { width:100%; display:grid; grid-template-columns:42px minmax(0,1fr) 28px; gap:12px; align-items:center; padding:14px 16px; border:0; background:#f7fbf8; color:var(--text); cursor:pointer; text-align:left; font:700 18px/1.4 Inter, Arial, Helvetica, sans-serif; }
+    .territory-accordion-trigger:hover { background:#eef8f1; }
+    .territory-accordion-trigger:focus-visible, .territory-image-trigger:focus-visible, .info-button:focus-visible, .close:focus-visible { outline:3px solid #ffbc35; outline-offset:3px; }
+    .info-button { display:inline-flex; width:28px; height:28px; margin:0 0 0 6px; padding:0; align-items:center; justify-content:center; vertical-align:middle; border:0; border-radius:50%; background:#3bb670; color:#fff; cursor:pointer; box-shadow:0 1px 3px #1e6f433d; }
+    .info-button:hover { background:#2e9e5d; }
+    .info-button:active { transform:scale(.96); }
+    .info-icon { font:700 19px/1 Arial, Helvetica, sans-serif; }
+    .step-number { display:flex; width:34px; height:34px; align-items:center; justify-content:center; border-radius:50%; background:var(--green); color:#fff; font-size:16px; font-weight:700; }
+    .accordion-chevron { color:var(--green-dark); font-size:24px; line-height:1; text-align:right; transition:transform .2s ease; }
+    .territory-accordion-trigger[aria-expanded="true"] .accordion-chevron { transform:rotate(45deg); }
+    .territory-accordion-content { padding:18px 16px; border-top:1px solid #e4ece7; }
+    .territory-accordion-content[hidden], .hidden { display:none !important; }
+    .territory-accordion-content p { margin:0 0 16px; }
+    .territory-accordion-content p:last-child { margin-bottom:0; }
+    .territory-image-trigger { display:block; width:min(808px, 100%); padding:0; border:0; border-radius:5px; background:transparent; cursor:zoom-in; }
+    .territory-image { display:block; width:100%; min-height:220px; max-height:58vh; object-fit:contain; border:1px solid var(--line); border-radius:5px; background:#f7fbf8; }
+    .image-fallback { color:#687984; font-size:16px; }
+    .modal-backdrop { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; background:#1528338a; }
+    .modal { position:relative; width:min(1000px, 100%); max-height:90vh; overflow:auto; padding:20px 22px; border-radius:8px; background:#fff; box-shadow:0 12px 35px #0006; }
+    .modal h2 { margin:0 40px 18px 0; font-size:20px; }
+    .close { position:absolute; top:16px; right:16px; display:flex; width:32px; height:32px; padding:0; align-items:center; justify-content:center; border:0; border-radius:50%; background:#edf2f6; color:#4d5f6c; cursor:pointer; font:600 24px/1 Inter, Arial, Helvetica, sans-serif; }
+    .close:hover { background:#e1e9ef; }
+    .close:active { transform:scale(.95); }
+    .modal-image { display:block; width:auto; max-width:100%; max-height:76vh; margin:0 auto; object-fit:contain; border:1px solid var(--line); border-radius:5px; cursor:zoom-out; }
+    .modal-fallback { margin:8px 0 0; color:#687984; font-size:16px; text-align:center; }
+    .info-modal { width:min(640px, 100%); padding:28px 36px 26px; }
+    .info-modal h2 { margin:0 48px 18px 0; font-size:20px; line-height:1.25; }
+    .info-modal .close { top:20px; right:20px; width:40px; height:40px; font-size:28px; }
+    .status-list { display:grid; gap:12px; margin:0; padding:0; list-style:none; font-size:18px; line-height:1.42; }
+    .status-list li { position:relative; padding-left:23px; }
+    .status-dot { position:absolute; top:.38em; left:0; width:13px; height:13px; border:1px solid #71808a; border-radius:50%; background:#d9dfe1; }
+    .status-list li:nth-child(2) .status-dot { background:#4d84e7; border-color:#3671d1; }
+    .status-list li:nth-child(3) .status-dot { background:#67c3d8; border-color:#3b9eb4; }
+    .status-list li:nth-child(4) .status-dot { background:#4ca849; border-color:#2f8132; }
+    .status-list li:nth-child(5) .status-dot { background:#8d5bd2; border-color:#7041b2; }
+    .status-list strong { font-weight:700; }
+    @media (max-width:700px) { body { padding:0 12px 16px; } main { padding:16px; } .territory-accordion-trigger { grid-template-columns:38px minmax(0,1fr) 22px; padding:12px; font-size:16px; } .territory-accordion-content { padding:12px; } .modal { padding:18px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="territory-accordion" id="territoryAccordion">
+      <section class="territory-accordion-item">
+        <button class="territory-accordion-trigger" type="button" aria-expanded="false" aria-controls="territoryList">
+          <span class="step-number">1</span>
+          <span>Выбор территории из списка</span>
+          <span class="accordion-chevron" aria-hidden="true">+</span>
+        </button>
+        <div class="territory-accordion-content" id="territoryList" hidden>
+          <p>Поставь галочку рядом с нужной территорией.</p>
+          <p>Чтобы было удобнее выбирать, воспользуйся фильтрами.</p>
+          <button class="territory-image-trigger" type="button" data-image-base="Из списка" data-image-title="Из списка" aria-label="Увеличить изображение «Из списка»">
+            <img class="territory-image" data-image-base="Из списка" alt="Выбор территории из списка" hidden>
+          </button>
+          <p class="image-fallback hidden">Положи изображение «Из списка» рядом с HTML-файлом.</p>
+        </div>
+      </section>
+
+      <section class="territory-accordion-item">
+        <button class="territory-accordion-trigger" type="button" aria-expanded="false" aria-controls="territoryMap">
+          <span class="step-number">2</span>
+          <span>Выбор территории кликом на карте</span>
+          <span class="accordion-chevron" aria-hidden="true">+</span>
+        </button>
+        <div class="territory-accordion-content" id="territoryMap" hidden>
+          <p>При наборе территорий кликом на карте можно сразу оценить их расположение.</p>
+          <p>Цвет территорий поможет понять, какие из них ещё можно назначить.<button class="info-button" id="statusInfoButton" type="button" aria-haspopup="dialog" aria-label="Дополнительная информация о статусах территорий" title="Дополнительная информация"><span class="info-icon" aria-hidden="true">i</span></button></p>
+          <button class="territory-image-trigger" type="button" data-image-base="Кликом на карте" data-image-title="Кликом на карте" aria-label="Увеличить изображение «Кликом на карте»">
+            <img class="territory-image" data-image-base="Кликом на карте" alt="Выбор территории кликом на карте" hidden>
+          </button>
+          <p class="image-fallback hidden">Положи изображение «Кликом на карте» рядом с HTML-файлом.</p>
+        </div>
+      </section>
+
+      <section class="territory-accordion-item">
+        <button class="territory-accordion-trigger" type="button" aria-expanded="false" aria-controls="territoryStatistics">
+          <span class="step-number">!</span>
+          <span>Окно статистики</span>
+          <span class="accordion-chevron" aria-hidden="true">+</span>
+        </button>
+        <div class="territory-accordion-content" id="territoryStatistics" hidden>
+          <p>Независимо от того, каким из способов ты набираешь территории для распределения, обрати внимание<br>на окно статистики — в нём сразу видно, сколько дней работы понадобится на их выверку.</p>
+          <p>Это помогает назначить каждому сотруднику столько территорий, сколько можно будет пройти<br>за запланированное время. Допустимое отклонение: 0,1–0,2 человеко-дня.</p>
+          <button class="territory-image-trigger" type="button" data-image-base="Из окна статистики" data-image-title="Из окна статистики" aria-label="Увеличить изображение «Из окна статистики»">
+            <img class="territory-image" data-image-base="Из окна статистики" alt="Выбор территории кликом в окне статистики" hidden>
+          </button>
+          <p class="image-fallback hidden">Положи изображение «Из окна статистики» рядом с HTML-файлом.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal-backdrop hidden" id="statusModal">
+    <div class="modal info-modal" role="dialog" aria-modal="true" aria-labelledby="statusModalTitle">
+      <button class="close" type="button" aria-label="Закрыть">×</button>
+      <h2 id="statusModalTitle">Статусы территорий</h2>
+      <ul class="status-list">
+        <li><span class="status-dot" aria-hidden="true"></span><strong>Закрыта</strong> — работы по такой территории завершены,<br>все задачи выполнены.</li>
+        <li><span class="status-dot" aria-hidden="true"></span><strong>В плане, не назначена</strong> — территория уже запланирована<br>на выверку, но пока ещё не указано, кто из сотрудников будет там работать.</li>
+        <li><span class="status-dot" aria-hidden="true"></span><strong>В плане, назначено</strong> — территория запланирована<br>на выверку, уже известно, кто и когда будет с ней работать.</li>
+        <li><span class="status-dot" aria-hidden="true"></span><strong>В работе</strong> — территория уже выгружена на рабочее устройство специалиста.</li>
+        <li><span class="status-dot" aria-hidden="true"></span><strong>Вне плана</strong> — запасная территория, которая, возможно, будет взята в работу. Подробнее о территориях вне плана ты узнаешь в конце этой главы.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="imageModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Увеличенное изображение">
+      <button class="close" type="button" aria-label="Закрыть">×</button>
+      <img class="modal-image" id="modalImage" alt="" hidden>
+      <p class="modal-fallback hidden" id="modalFallback"></p>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+      const accordionTriggers = [...document.querySelectorAll('.territory-accordion-trigger')];
+      const imageButtons = [...document.querySelectorAll('.territory-image-trigger')];
+      const modal = document.getElementById('imageModal');
+      const statusModal = document.getElementById('statusModal');
+      const statusInfoButton = document.getElementById('statusInfoButton');
+      const statusCloseButton = statusModal.querySelector('.close');
+      const modalImage = document.getElementById('modalImage');
+      const modalFallback = document.getElementById('modalFallback');
+      const closeButton = modal.querySelector('.close');
+      let lastFocus = null;
+      let imageRequestId = 0;
+
+      function variants(baseName) {
+        return [baseName, `${baseName}.png`, `${baseName}.jpg`, `${baseName}.jpeg`, `${baseName}.webp`];
+      }
+
+      function toggleAccordion(trigger) {
+        const content = document.getElementById(trigger.getAttribute('aria-controls'));
+        if (!content) return;
+        const opening = content.hidden;
+        accordionTriggers.forEach((otherTrigger) => {
+          const otherContent = document.getElementById(otherTrigger.getAttribute('aria-controls'));
+          if (otherContent) otherContent.hidden = true;
+          otherTrigger.setAttribute('aria-expanded', 'false');
+        });
+        if (opening) {
+          content.hidden = false;
+          trigger.setAttribute('aria-expanded', 'true');
+          loadImagesIn(content);
+        }
+      }
+
+      function loadImage(image, fallback) {
+        if (image.dataset.loaded === 'true') return;
+        image.dataset.loaded = 'true';
+        const sources = variants(image.dataset.imageBase);
+        let index = 0;
+        image.onload = () => { image.hidden = false; fallback.hidden = true; };
+        image.onerror = () => {
+          index += 1;
+          if (index < sources.length) image.src = sources[index];
+          else { image.hidden = true; fallback.hidden = false; }
+        };
+        image.src = sources[index];
+      }
+
+      function loadImagesIn(content) {
+        const image = content.querySelector('.territory-image');
+        const fallback = content.querySelector('.image-fallback');
+        if (image && fallback) loadImage(image, fallback);
+      }
+
+      function closeModal() {
+        imageRequestId += 1;
+        modal.classList.add('hidden');
+        modalImage.hidden = true;
+        modalImage.removeAttribute('src');
+        modalFallback.hidden = true;
+        if (lastFocus) lastFocus.focus();
+      }
+
+      function openStatusModal() {
+        lastFocus = statusInfoButton;
+        statusModal.classList.remove('hidden');
+        statusCloseButton.focus();
+      }
+
+      function closeStatusModal() {
+        statusModal.classList.add('hidden');
+        if (lastFocus) lastFocus.focus();
+      }
+
+      function openImage(baseName, title, opener) {
+        const sources = variants(baseName);
+        const requestId = ++imageRequestId;
+        let index = 0;
+        lastFocus = opener;
+        modalImage.alt = title;
+        modalImage.hidden = true;
+        modalImage.removeAttribute('src');
+        modalFallback.hidden = true;
+        modal.classList.remove('hidden');
+        closeButton.focus();
+
+        function loadNext() {
+          if (requestId !== imageRequestId) return;
+          if (index >= sources.length) {
+            modalFallback.textContent = `Положи изображение «${baseName}» рядом с HTML-файлом.`;
+            modalFallback.hidden = false;
+            return;
+          }
+          const preloadedImage = new Image();
+          preloadedImage.onload = () => {
+            if (requestId !== imageRequestId) return;
+            modalImage.src = sources[index];
+            modalImage.hidden = false;
+          };
+          preloadedImage.onerror = () => { index += 1; loadNext(); };
+          preloadedImage.src = sources[index];
+        }
+        loadNext();
+      }
+
+      accordionTriggers.forEach((trigger) => trigger.addEventListener('click', () => toggleAccordion(trigger)));
+      imageButtons.forEach((button) => button.addEventListener('click', () => openImage(button.dataset.imageBase, button.dataset.imageTitle, button)));
+      closeButton.addEventListener('click', closeModal);
+      modal.addEventListener('click', (event) => { if (event.target === modal) closeModal(); });
+      statusInfoButton.addEventListener('click', openStatusModal);
+      statusCloseButton.addEventListener('click', closeStatusModal);
+      statusModal.addEventListener('click', (event) => { if (event.target === statusModal) closeStatusModal(); });
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        if (!modal.classList.contains('hidden')) closeModal();
+        else if (!statusModal.classList.contains('hidden')) closeStatusModal();
+      });
+    })();
+  </script>
+</body>
+</html>
